@@ -147,12 +147,12 @@ class TelegramBot():
             response = completion.choices[0].message.content
 
             if len(response) > 4096:
-                with open("response{}.txt".format(user_id), "w", encoding="utf-8") as file:
+                with open("response{}.txt".format(user_id), "w", encoding="utf-8", errors='ignore') as file:
                     file.write(response)
             
                 await context.bot.send_document(
                     chat_id=update.effective_chat.id,
-                    document=open("response{}.txt".format(user_id), "r"),
+                    document=open("response{}.txt".format(user_id), "r", encoding="utf-8", errors="ignore"),
                     caption="Ответ слишком длинный, поэтому записал его в текстовый файл"
                 )
 
@@ -165,7 +165,9 @@ class TelegramBot():
                 )
 
             context.user_data["messages"].append({"role": "system", "content": response})
-        except Exception:
+        except Exception as ex:
+            print(ex)
+
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
                 text="Что то пошло не так, попробуйте снова"
