@@ -170,7 +170,7 @@ class TelegramBot():
 
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text="Что то пошло не так, попробуйте снова"
+                text="Что то пошло не так, попробуйте снова. Убедитесь, что вы присылаете текст и/или фотографию не файлом."
             )
     
     async def handle_image_model_request(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
