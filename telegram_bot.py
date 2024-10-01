@@ -254,15 +254,17 @@ class TelegramBot():
 
         current_model = context.user_data["current_model"]
 
-        if context.user_data[current_model] <= 0:
-            await context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text="У вас больше нет запросов на эту модель"
-            )
+        if context.user_data[current_model] != "unlimited":
 
-            return
-        
-        context.user_data[current_model] -= 1
+            if context.user_data[current_model] <= 0:
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text="У вас больше нет запросов на эту модель"
+                )
+
+                return
+            
+            context.user_data[current_model] -= 1
 
         chat_models = ["gpt-4o-mini", "gpt-4o"]
 
@@ -316,7 +318,7 @@ class TelegramBot():
             chat_id=update.effective_chat.id,
             title="Подписка на бота",
             description="Активация подписки на бота на 30 дней",
-            payload="Bot-Subscription",
+            payload="Bot-Subscription-{}".format(chosen_premium),
             provider_token=os.environ.get("PROVIDER_TOKEN"),
             currency="RUB",
             prices=[LabeledPrice(label="Подписка на 1 месяц", amount=amount)]
@@ -325,14 +327,37 @@ class TelegramBot():
     async def answer_pre_checkout_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.pre_checkout_query
 
-        if query.invoice_payload != "Bot-Subscription":
+        invoice_payloads = ["Bot-Subscription-Lite", "Bot-Subscription-Smart", "Bot-Subscription-Pro"]
+
+        if query.invoice_payload not in invoice_payloads:
             await query.answer(ok=False, error_message="Something went wrong")
         else:
+            context.user_data["chosen_premium"] = query.invoice_payload.split("-")[2]
             await query.answer(ok=True)
     
     async def successful_payment(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if context.user_data["chosen_premium"] == "Lite":
+            context.user_data["gpt-4o-mini"] = "unlimited"
+            context.user_data["gpt-4o"] = 25
+            context.user_data["dall-e-3"] = 10
+            context.user_data["whisper"] = "unlimited"
+            context.user_data["subscription"] = "Lite"
+        elif context.user_data["chosen_premium"] == "Smart":
+            context.user_data["gpt-4o-mini"] = "unlimited"
+            context.user_data["gpt-4o"] = 50
+            context.user_data["dall-e-3"] = 25
+            context.user_data["whisper"] = "unlimited"
+            context.user_data["subscription"] = "Smart"
+        else:
+            context.user_data["gpt-4o-mini"] = "unlimited"
+            context.user_data["gpt-4o"] = 100
+            context.user_data["dall-e-3"] = 50
+            context.user_data["whisper"] = "unlimited"
+            context.user_data["subscription"] = "Pro"
+
         await context.bot.send_message(
-            chat_id=update.effective_chat.id
+            chat_id=update.effective_chat.id,
+            text="Оплата прошла успешно!"
         )
 
     async def view_account(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -391,6 +416,7 @@ class TelegramBot():
         choose_model_button_handler = CallbackQueryHandler(self.handle_choose_model_button, pattern="^(gpt|dall-e|whisper)")
         choose_premium_button_handler = CallbackQueryHandler(self.handle_choose_premium_button, pattern="Lite|Smart|Pro")
         pre_checkout_query_handler = PreCheckoutQueryHandler(self.answer_pre_checkout_query)
+        successful_payment_handler = MessageHandler(filters.SUCCESSFUL_PAYMENT, self.successful_payment)
 
         self.application.add_handler(start_handler)
         self.application.add_handler(message_handler)
@@ -402,6 +428,7 @@ class TelegramBot():
         self.application.add_handler(choose_model_button_handler)
         self.application.add_handler(choose_premium_button_handler)
         self.application.add_handler(pre_checkout_query_handler)
+        self.application.add_handler(successful_payment_handler)
     
     def run(self):
         self.application.run_polling()
