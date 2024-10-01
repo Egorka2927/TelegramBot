@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from pymongo.mongo_client import MongoClient
 from texts import TextGenerator
 from mongodb_persistence import MongoDBPersistence
+from datetime import datetime
 
 class TelegramBot():
     def __init__(self):
@@ -67,9 +68,14 @@ class TelegramBot():
         
         if "messages" not in context.user_data:
             context.user_data["messages"] = []
+        
+        if context.user_data["subscription"] != "Free":
+            return
 
+        if context.user_data["last_free_request_date"] != datetime.now().date().isoformat():
+            context.user_data["last_free_request_date"] = datetime.now().date().isoformat()
+            context.user_data["gpt-4o-mini"] = 5
 
-    
     async def help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = "Список команд:\n\n/new_chat - Начать новый чат\n/help - Посмотреть список команд"
 
