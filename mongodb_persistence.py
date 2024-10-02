@@ -31,7 +31,9 @@ class MongoDBPersistence(BasePersistence):
                 "gpt-4o": user.get("gpt-4o"),
                 "dall-e-3": user.get("dall-e-3"),
                 "whisper": user.get("whisper"),
-                "subscription": user.get("subscription", "Free")
+                "subscription": user.get("subscription", "Free"),
+                "last_free_request_date": user.get("last_free_request_date"),
+                "subscription_expiry_date": user.get("subscription_expiry_date")
             }
 
         return user_data
@@ -40,6 +42,9 @@ class MongoDBPersistence(BasePersistence):
         if user_id:
             if "messages" in data.keys():
                 data.pop("messages")
+            
+            if "chosen_premium" in data.keys():
+                data.pop("chosen_premium")
 
             self.users_collection.update_one(              
                 {"telegram_id": user_id},
@@ -54,7 +59,6 @@ class MongoDBPersistence(BasePersistence):
 
     async def refresh_user_data(self, user_id: int, user_data: dict):
         pass
-
 
     async def get_chat_data(self):
         pass

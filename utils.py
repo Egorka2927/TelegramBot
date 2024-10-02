@@ -10,7 +10,8 @@ def create_user_data(context: ContextTypes.DEFAULT_TYPE, user: dict):
     context.user_data["dall-e-3"] = user.get("dall-e-3")
     context.user_data["whisper"] = user.get("whisper")
     context.user_data["subscription"] = user.get("subscription", "Free")
-    context.user_data["last_free_request_date"] = datetime.now().date().isoformat()
+    context.user_data["last_free_request_date"] = user.get("last_free_request_date")
+    context.user_data["subscription_expiry_date"] = user.get("subscription_expiry_date")
 
 def create_new_user(user_id):
     user = {
@@ -21,7 +22,8 @@ def create_new_user(user_id):
         "dall-e-3": 0,
         "whisper": 0,
         "subscription": "Free",
-        "last_free_request_date": datetime.now().date().isoformat()
+        "last_free_request_date": datetime.now().date().isoformat(),
+        "subscription_expiry_date": "Безлимит"
     }
 
     return user

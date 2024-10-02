@@ -33,6 +33,7 @@ class TextGenerator():
     def get_account_text(self, user: dict):
         return """
     Подписка: {}
+Дата истечения подписки: {}
 Текущая модель: {}
 
 Осталось запросов:
@@ -40,4 +41,4 @@ GPT-4o-mini: {}
 GPT-4o: {}
 DALL-E 3: {}
 WHISPER: {}
-    """.format(user.get("subscription"), user.get("current_model"), user.get("gpt-4o-mini"), user.get("gpt-4o"), user.get("dall-e-3"), user.get("whisper"))
+    """.format(user.get("subscription"), user.get("subscription_expiry_date"), user.get("current_model"), user.get("gpt-4o-mini"), user.get("gpt-4o"), user.get("dall-e-3"), user.get("whisper"))

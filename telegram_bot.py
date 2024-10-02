@@ -70,10 +70,21 @@ class TelegramBot():
             context.user_data["messages"] = []
         
         if context.user_data["subscription"] != "Free":
-            return
+            if datetime.fromisoformat(context.user_data["subscription_expiry_date"]) <= datetime.now():
+                context.user_data["subscription"] = "Free"
+                context.user_data["last_free_request_date"] = datetime.now().date().isoformat()
+                context.user_data["subscription_expiry_date"] = "Безлимит"
+                context.user_data["gpt-4o-mini"] = 0
+                context.user_data["gpt-4o"] = 0
+                context.user_data["dall-e-3"] = 0
+                context.user_data["whisper"] = 0
 
-        if context.user_data["last_free_request_date"] != datetime.now().date().isoformat():
-            context.user_data["last_free_request_date"] = datetime.now().date().isoformat()
+            return
+        
+        current_date = datetime.now().date().isoformat()
+
+        if context.user_data["last_free_request_date"] != current_date:
+            context.user_data["last_free_request_date"] = current_date
             context.user_data["gpt-4o-mini"] = 5
 
     async def help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -260,7 +271,7 @@ class TelegramBot():
 
         current_model = context.user_data["current_model"]
 
-        if context.user_data[current_model] != "unlimited":
+        if context.user_data[current_model] != "Безлимит":
 
             if context.user_data[current_model] <= 0:
                 await context.bot.send_message(
@@ -343,23 +354,37 @@ class TelegramBot():
     
     async def successful_payment(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if context.user_data["chosen_premium"] == "Lite":
-            context.user_data["gpt-4o-mini"] = "unlimited"
+            context.user_data["gpt-4o-mini"] = "Безлимит"
             context.user_data["gpt-4o"] = 25
             context.user_data["dall-e-3"] = 10
-            context.user_data["whisper"] = "unlimited"
+            context.user_data["whisper"] = "Безлимит"
             context.user_data["subscription"] = "Lite"
         elif context.user_data["chosen_premium"] == "Smart":
-            context.user_data["gpt-4o-mini"] = "unlimited"
+            context.user_data["gpt-4o-mini"] = "Безлимит"
             context.user_data["gpt-4o"] = 50
             context.user_data["dall-e-3"] = 25
-            context.user_data["whisper"] = "unlimited"
+            context.user_data["whisper"] = "Безлимит"
             context.user_data["subscription"] = "Smart"
         else:
-            context.user_data["gpt-4o-mini"] = "unlimited"
+            context.user_data["gpt-4o-mini"] = "Безлимит"
             context.user_data["gpt-4o"] = 100
             context.user_data["dall-e-3"] = 50
-            context.user_data["whisper"] = "unlimited"
+            context.user_data["whisper"] = "Безлимит"
             context.user_data["subscription"] = "Pro"
+        
+        current_date_list = datetime.now().date().isoformat().split("-")
+
+        if current_date_list[1] == "12":
+            context.user_data["subscription_expiry_date"] = str(int(current_date_list[0]) + 1) + "-01-" + current_date_list[2]
+        else:
+            month = str(int(current_date_list[1]) + 1)
+
+            if len(month) == 1:
+                month = "0" + month
+
+            context.user_data["subscription_expiry_date"] = current_date_list[0] + "-" + month + "-" + current_date_list[2]
+
+        context.user_data.pop("chosen_premium")
 
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
