@@ -24,7 +24,6 @@ class TelegramBot():
 
         self.openai_client = OpenAI(
             organization=os.environ.get("ORGANIZATION_ID"),
-            project=os.environ.get("PROJECT_ID"),
             api_key=os.environ.get("OPENAI_API_KEY")
         )
 
