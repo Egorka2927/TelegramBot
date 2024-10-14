@@ -295,9 +295,9 @@ class TelegramBot():
         self.check_data(update, context)
 
         keyboard = [
-            [InlineKeyboardButton("Лайт", callback_data="Lite")],
-            [InlineKeyboardButton("Смарт", callback_data="Smart")],
-            [InlineKeyboardButton("Про", callback_data="Pro")],
+            [InlineKeyboardButton("Лайт 499 руб.", callback_data="Lite")],
+            [InlineKeyboardButton("Смарт 999 руб.", callback_data="Smart")],
+            [InlineKeyboardButton("Про 1499 руб.", callback_data="Pro")],
         ]
 
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -320,15 +320,20 @@ class TelegramBot():
         amount = None
 
         if chosen_premium == "Lite":
-            amount = 500 * 100
+            amount = 499 * 100
         elif chosen_premium == "Smart":
-            amount = 1000 * 100
+            amount = 999 * 100
         else:
-            amount = 1500 * 100
-        
-        await query.edit_message_text(
-            text="Вы выбрали тариф: {}. Вам был отправлен инвойс".format(chosen_premium)
-        )
+            amount = 1499 * 100
+
+        await query.delete_message()
+
+        pay_button = InlineKeyboardButton("Оплатить {} руб.".format(int(amount / 100)), pay=True)
+        go_back_button = InlineKeyboardButton("Назад", callback_data="back_to_premium")
+
+        keyboard = [[pay_button], [go_back_button]]
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
 
         await context.bot.send_invoice(
             chat_id=update.effective_chat.id,
@@ -337,7 +342,8 @@ class TelegramBot():
             payload="Bot-Subscription-{}".format(chosen_premium),
             provider_token=os.environ.get("PROVIDER_TOKEN"),
             currency="RUB",
-            prices=[LabeledPrice(label="Подписка на 1 месяц", amount=amount)]
+            prices=[LabeledPrice(label="Подписка на 1 месяц", amount=amount)],
+            reply_markup=reply_markup
         )
     
     async def answer_pre_checkout_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -388,6 +394,29 @@ class TelegramBot():
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text="Оплата прошла успешно!"
+        )
+
+    async def handle_go_back_to_premium(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        self.check_data(update, context)
+
+        query = update.callback_query
+
+        await query.answer()
+
+        keyboard = [
+            [InlineKeyboardButton("Лайт 499 руб.", callback_data="Lite")],
+            [InlineKeyboardButton("Смарт 999 руб.", callback_data="Smart")],
+            [InlineKeyboardButton("Про 1499 руб.", callback_data="Pro")],
+        ]
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await query.delete_message()
+
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=self.text_generator.get_premium_text(),
+            reply_markup=reply_markup
         )
 
     async def view_account(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -445,6 +474,7 @@ class TelegramBot():
         choose_model_handler = CommandHandler("model", self.choose_model)
         choose_model_button_handler = CallbackQueryHandler(self.handle_choose_model_button, pattern="^(gpt|dall-e|whisper)")
         choose_premium_button_handler = CallbackQueryHandler(self.handle_choose_premium_button, pattern="Lite|Smart|Pro")
+        go_back_to_premium_handler = CallbackQueryHandler(self.handle_go_back_to_premium, pattern="back_to_premium")
         pre_checkout_query_handler = PreCheckoutQueryHandler(self.answer_pre_checkout_query)
         successful_payment_handler = MessageHandler(filters.SUCCESSFUL_PAYMENT, self.successful_payment)
 
@@ -457,6 +487,7 @@ class TelegramBot():
         self.application.add_handler(choose_model_handler)
         self.application.add_handler(choose_model_button_handler)
         self.application.add_handler(choose_premium_button_handler)
+        self.application.add_handler(go_back_to_premium_handler)
         self.application.add_handler(pre_checkout_query_handler)
         self.application.add_handler(successful_payment_handler)
     
