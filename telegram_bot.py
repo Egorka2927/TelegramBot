@@ -86,8 +86,10 @@ class TelegramBot():
             context.user_data["last_free_request_date"] = current_date
             context.user_data["gpt-4o-mini"] = 5
 
-    async def help(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        message = "Список команд:\n\n/new_chat - Начать новый чат\n/help - Посмотреть список команд"
+    async def info(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        self.check_data(update, context)
+
+        message = self.text_generator.get_info_text()
 
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
@@ -467,7 +469,7 @@ class TelegramBot():
     def add_handlers(self):
         start_handler = CommandHandler("start", self.start)
         new_chat_handler = CommandHandler("new_chat", self.start_new_chat)
-        help_handler = CommandHandler("help", self.help)
+        info_handler = CommandHandler("info", self.info)
         premium_handler = CommandHandler("premium", self.choose_premium)
         account_handler = CommandHandler("account", self.view_account)
         message_handler = MessageHandler((filters.TEXT & (~filters.COMMAND)) | filters.PHOTO | filters.VOICE, self.chat_request)
@@ -481,7 +483,7 @@ class TelegramBot():
         self.application.add_handler(start_handler)
         self.application.add_handler(message_handler)
         self.application.add_handler(new_chat_handler)
-        self.application.add_handler(help_handler)
+        self.application.add_handler(info_handler)
         self.application.add_handler(premium_handler)
         self.application.add_handler(account_handler)
         self.application.add_handler(choose_model_handler)
