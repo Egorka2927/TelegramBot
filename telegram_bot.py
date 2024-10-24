@@ -345,7 +345,24 @@ class TelegramBot():
             provider_token=os.environ.get("PROVIDER_TOKEN"),
             currency="RUB",
             prices=[LabeledPrice(label="Подписка на 1 месяц", amount=amount)],
-            reply_markup=reply_markup
+            reply_markup=reply_markup,
+            need_email=True,
+            send_email_to_provider=True,
+            provider_data={
+                "receipt": {
+                    "items": [
+                        {
+                            "description": "Подписка на бота {}".format(chosen_premium),
+                            "quantity": "1.00",
+                            "amount": {
+                                "value": str(amount / 100),
+                                "currency": "RUB"
+                            },
+                            "vat_code": 1
+                        }
+                    ]
+                }
+            }
         )
     
     async def answer_pre_checkout_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -363,13 +380,13 @@ class TelegramBot():
         if context.user_data["chosen_premium"] == "Lite":
             context.user_data["gpt-4o-mini"] = "Безлимит"
             context.user_data["gpt-4o"] = 25
-            context.user_data["dall-e-3"] = 10
+            context.user_data["dall-e-3"] = 25
             context.user_data["whisper"] = "Безлимит"
             context.user_data["subscription"] = "Lite"
         elif context.user_data["chosen_premium"] == "Smart":
             context.user_data["gpt-4o-mini"] = "Безлимит"
             context.user_data["gpt-4o"] = 50
-            context.user_data["dall-e-3"] = 25
+            context.user_data["dall-e-3"] = 50
             context.user_data["whisper"] = "Безлимит"
             context.user_data["subscription"] = "Smart"
         else:
