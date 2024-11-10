@@ -259,7 +259,7 @@ class TelegramBot():
 
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text="Это модель принимает только голосовые сообщения"
+                text="Эта модель принимает только голосовые сообщения"
             )
 
     async def chat_request(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
