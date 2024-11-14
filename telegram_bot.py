@@ -73,7 +73,7 @@ class TelegramBot():
                 context.user_data["subscription"] = "Free"
                 context.user_data["last_free_request_date"] = datetime.now().date().isoformat()
                 context.user_data["subscription_expiry_date"] = "Безлимит"
-                context.user_data["gpt-4o-mini"] = 0
+                context.user_data["gpt-4o-mini"] = 5
                 context.user_data["gpt-4o"] = 0
                 context.user_data["dall-e-3"] = 0
                 context.user_data["whisper"] = 0
